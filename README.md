@@ -7,6 +7,8 @@
 Program yang berada pada fungsi `main` berfungsi untuk membaca setiap TCPStream yang masuk dari TCP menggunakan TCPListener. Kemudian untuk setiap stream yang diterima oleh TCPListener akan diolah menggunakan function `handle_connection`. Function `handle_connection` berfungsi untuk mengekstrak header dari TCPStream yang berupa HTTP request dari browser. Lalu, stream akan dibaca melalui `io::BufReader` yang berfungsi untuk membaca setiap line dari TCPStream. Kemudian, method `lines()` digunakan untuk memisahkan setiap lines dari TCPStream. Kemudian, method `map()` dan method `unwrap()` berfungsi untuk mengubah setiap result menjadi bentuk `String`. Selanjutnya, method `take_while()` akan mengambil setiap line hingga baris kosong ditemukan yang menandakan akhir dari TCPStream. Terakhir, method `collect()` digunakan untuk mengumpulkan setiap line yang telah diproses menjadi vektor. Setelah menjalankan semua method diatas, program akan memberikan response yang menunjukkan detail request melalui konsol terminal.
 
 
+
+
 ### Commit 2 Reflection Notes
 
 Pada milestone 2, terdapat perubahan pada function `handle_connection` yaitu :
@@ -23,6 +25,66 @@ Pada milestone 2, terdapat perubahan pada function `handle_connection` yaitu :
     stream.write_all(response.as_bytes()).unwrap();
 ```
 
-perubahan diatas berfungsi untuk memberikan response kepada browser dengan me-return HTML. `status_line` berfungsi untuk memberikan status bahwa Request HTTP berhasil dengan response kode 200. `contents` akan membaca isi dari file `hello.html` dan diunwrap kedalam bentuk String. Kemudian, `response` akan menyimpan string HTML pada `contents` yang telah diformat kedalam bentuk response, yang kemudian akan ditulis dalam bentuk bytes ke stream melalui method `write_all()`.
+Perubahan diatas berfungsi untuk memberikan response kepada browser dengan me-return HTML. `status_line` berfungsi untuk memberikan status bahwa Request HTTP berhasil dengan response kode 200. `contents` akan membaca isi dari file `hello.html` dan diunwrap kedalam bentuk String. Kemudian, `response` akan menyimpan string HTML pada `contents` yang telah diformat kedalam bentuk response, yang kemudian akan ditulis dalam bentuk bytes ke stream melalui method `write_all()`.
 
+Screenshot : 
 ![Commit 2 screen capture](/assets/images/commit2.png)
+
+
+
+### Commit 3 Reflection Notes
+
+Pada milestone 3, terdapat tambahan pada function `handle_connection` yaitu :
+
+```rust
+    let request_line = buf_reader.lines().next().unwrap().unwrap();
+
+    if request_line == "GET / HTTP/1.1" {
+        let status_line = "HTTP/1.1 200 OK";
+        let contents = fs::read_to_string("hello.html").unwrap();
+        let length = contents.len();
+
+        let response = format!(
+            "{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}"
+        );
+
+        stream.write_all(response.as_bytes()).unwrap();
+    } else {
+        let status_line = "HTTP/1.1 404 NOT FOUND";
+        let contents = fs::read_to_string("404.html").unwrap();
+        let length = contents.len();
+
+        let response = format!(
+            "{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}"
+        );
+
+        stream.write_all(response.as_bytes()).unwrap();
+    }
+```
+
+Tambahan kode diatas berfungsi untuk menghandle ketika browser melakukan request ke page yang tidak ada. Hal ini dilakukan dengan menambahkan conditionals yang akan mengecek status dari request. 
+
+`let request_line = buf_reader.lines().next().unwrap().unwrap();` berfungsi untuk membaca path yang direquest oleh browser dimana `next()` berfungsi mengambil line pertama yaitu path yang direquest user, `unwrap()` yang pertama untuk mendapatkan result dari option, dan `unwrap()` selanjutnya untuk mendapatkan String dari result. 
+
+Jika `request_line` memiliki status `GET` ke path `/`, maka server akan memberikan response dengan me-return `hello.html`. Jika request tersebut memiliki status `404 NOT FOUND`, maka server akan memberikan response dengan me-return `404.html`.
+
+Namun, kode tersebut mengandung repetisi pada blok `if` dan `else` dimana kedua blok conditionals tersebut sama-sama membaca stream dan mengembalikan response, hanya berbeda pada file HTML yang di return. Hal ini tentunya melanggar prinsip DRY (Don't Repeat Yourself). Kode tersebut dapat di-refactor menjadi :
+
+```rust
+    let (status_line, filename) = if request_line == "GET / HTTP/1.1" {
+        ("HTTP/1.1 200 OK", "hello.html")
+    } else {
+        ("HTTP/1.1 404 NOT FOUND", "404.html")
+    };
+
+    let contents = fs::read_to_string(filename).unwrap();
+    let length = contents.len();
+
+    let response =
+        format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
+
+    stream.write_all(response.as_bytes()).unwrap();
+```
+
+Screenshot :
+![Commit 3 screen capture](/assets/images/commit3.png)
