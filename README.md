@@ -88,3 +88,7 @@ Namun, kode tersebut mengandung repetisi pada blok `if` dan `else` dimana kedua 
 
 Screenshot :
 ![Commit 3 screen capture](/assets/images/commit3.png)
+
+### Commit 4 Reflection Notes
+
+Pada milestone 4, terdapat perubahan pada function `handle_connection` tepatnya pada perubahan di blok conditionals yang awalnya menggunakan if else menjadi menggunakan match dimana match akan mencari string yang cocok didalam curly bracketsnya dan menjalankan program yang sesuai dengannya. Lalu, terdapat juga pembuatan path request baru yaitu `GET /sleep HTTP/1.1` yang memungkinkan user untuk membuka page `/sleep`. Namun, ketika terjadi request ke page `/sleep`, maka akan terjadi delay karena adanya kode `thread::sleep(Duration::from_secs(10)); ("HTTP/1.1 200 OK", "hello.html");` yang akan memberhentikan program selama 10 detik sebelum kemudian dijalankan kembali. Dengan demikian, ketika ada user yang melakukan request ke page `/sleep`, user yang membuka page `/` akan mengalami delay jika proses pemberhentian program selama 10 detik yang disebabkan oleh request ke `/sleep` belum selesai.
